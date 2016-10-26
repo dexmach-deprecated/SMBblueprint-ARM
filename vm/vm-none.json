@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vm":{
+            "type": "object",
+            "metadata": {
+                "description": "The Active Directory Domain Services VM. The parameter should contain the following properties;Name, virtualNetworkName, virtualNetworkSubnetName and the username"
+            }
+        },
+        "adminPassword" : {
+          "type": "securestring",
+          "metadata": {
+            "description" : "The admin password"
+          }
+        },
+        "domainAdminPassword" : {
+          "type": "securestring",
+          "metadata": {
+            "description" : "The domain admin password"
+          }
+        },
+        "workspaceName" : {
+            "type": "string",
+            "metadata": {
+                "description" : "the workspacename"
+            }
+        }
+  },
+  "variables": {},
+  "resources": [],
+  "outputs": {}
+}

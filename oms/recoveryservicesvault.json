@@ -1,0 +1,152 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vaultName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Vault"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "westeurope",
+            "allowedValues": [
+                "westeurope"
+            ],
+            "metadata": {
+                "description": "This is the location where the recovery services vault will be created"
+            }
+        }
+    },
+    "variables": {
+        "skuTier": "Standard",
+        "backupPolicyName": "defaultPolicy-01",
+        "backupPolicies": {
+            "schedulePolicy": {
+                "scheduleRunFrequency": "Daily",
+                "scheduleRunTimes": [
+                    "2016-09-21T05:30:00Z"
+                ],
+                "schedulePolicyType": "SimpleSchedulePolicy"
+            },
+            "retentionPolicy": {
+                "dailySchedule": {
+                    "retentionDuration": {
+                        "count": "30",
+                        "durationType": "Days"
+                    }
+                },
+                "weeklySchedule": {
+                    "daysOfTheWeek": ["Sunday"],
+                    "retentionDuration": {
+                        "count": "104",
+                        "durationType": "Weeks"
+                    }
+                },
+                "monthlySchedule": {
+                    "daysOfTheWeek": ["Sunday"],
+                    "weeksOfTheMonth": [
+                        "First",
+                        "Third"
+                    ],
+                    "retentionTimes": "Sunday",
+                    "retentionDuration": {
+                        "count": "60",
+                        "durationType": "Months"
+                    }
+                },
+                "yearlySchedule": {
+                    "retentionScheduleFormatType": "Weekly",
+                    "daysOfTheWeek": [
+                        "Sunday"
+                    ],
+                    "weeksOfTheMonth": [
+                        "First"
+                    ],
+                    "monthsOfYear":  [
+                            "January",
+                            "February",
+                            "March",
+                            "April",
+                            "May",
+                            "June",
+                            "July",
+                            "August",
+                            "September",
+                            "October",
+                            "November",
+                            "December"
+                        ],
+                    "retentionTimesNew": [],
+                    "retentionDuration": {
+                        "count": "10",
+                        "durationType": "Years"
+                    }
+                }
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.RecoveryServices/vaults",
+            "apiVersion": "2015-11-10",
+            "name": "[parameters('vaultName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "RS0",
+                "tier": "[variables('skuTier')]"
+            },
+            "properties": {}
+        },
+        {
+            "apiVersion": "2015-11-10",
+            "name": "[concat(parameters('vaultName'), '/', variables('backupPolicyName'))]",
+            "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+            "dependsOn": [
+                "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+            ],
+            "location": "[parameters('location')]",
+            "properties": {
+                "backupManagementType": "AzureIaasVM",
+                "schedulePolicy": {
+                    "schedulePolicyType": "SimpleSchedulePolicy",
+                    "scheduleRunFrequency": "[variables('backupPolicies').schedulePolicy.scheduleRunFrequency]",
+                    "scheduleRunTimes":"[variables('backupPolicies').schedulePolicy.scheduleRunTimes]",
+                    "scheduleWeeklyFrequency": 0
+                },
+                "retentionPolicy": {
+                    "retentionPolicyType": "LongTermRetentionPolicy",
+                    "dailySchedule": {
+                        "retentionTimes": "[variables('backupPolicies').schedulePolicy.scheduleRunTimes]",
+                        "retentionDuration": "[variables('backupPolicies').retentionPolicy.dailySchedule.retentionDuration]"
+                    },
+                    "weeklySchedule": {
+                        "daysOfTheWeek": "[variables('backupPolicies').retentionPolicy.weeklySchedule.daysOfTheWeek]",
+                        "retentionTimes": "[variables('backupPolicies').schedulePolicy.scheduleRunTimes]",
+                        "retentionDuration": "[variables('backupPolicies').retentionPolicy.weeklySchedule.retentionDuration]"
+                    },
+                    "monthlySchedule": {
+                        "retentionScheduleFormatType": "Weekly",
+                        "retentionScheduleWeekly": {
+                            "daysOfTheWeek": "[variables('backupPolicies').retentionPolicy.monthlySchedule.daysOfTheWeek]",
+                            "weeksOfTheMonth": "[variables('backupPolicies').retentionPolicy.monthlySchedule.weeksOfTheMonth]"
+                        },
+                        "retentionTimes": "[variables('backupPolicies').schedulePolicy.scheduleRunTimes]",
+                        "retentionDuration": "[variables('backupPolicies').retentionPolicy.monthlySchedule.retentionDuration]"
+                    },
+                    "yearlySchedule": {
+                        "retentionScheduleFormatType": "[variables('backupPolicies').retentionPolicy.yearlySchedule.retentionScheduleFormatType]",
+                        "monthsOfYear": "[variables('backupPolicies').retentionPolicy.yearlySchedule.monthsOfYear]",
+                        "retentionScheduleWeekly": {
+                            "daysOfTheWeek": "[variables('backupPolicies').retentionPolicy.yearlySchedule.daysOfTheWeek]",
+                            "weeksOfTheMonth":"[variables('backupPolicies').retentionPolicy.yearlySchedule.weeksOfTheMonth]"
+                        },
+                        "retentionTimes": "[variables('backupPolicies').schedulePolicy.scheduleRunTimes]",
+                        "retentionDuration": "[variables('backupPolicies').retentionPolicy.yearlySchedule.retentionDuration]"
+                    }
+                }
+            }
+        }
+    ]
+}

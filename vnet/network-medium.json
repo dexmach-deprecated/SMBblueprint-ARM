@@ -1,0 +1,124 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "virtualNetwork" : {
+            "type": "object",
+            "metadata": {
+                "description" : "The virtual network object"
+            }
+        },
+        "DNS":{
+            "type":"array",
+            "defaultValue": [],
+            "metadata": {
+                "description":"The DNS Servers to configure for the VNET"
+            }
+        }
+    },
+    "variables": {
+        "apiVersion" : {
+            "network" : {
+                "virtualNetwork" : "2016-03-30",
+                "networkSecurityGroups" : "2016-03-30"
+            }
+        },
+        "resourceLocation" : "[resourceGroup().location]"
+    },
+    "resources": [
+    	{
+            "apiVersion": "[variables('apiversion').network.networkSecurityGroups]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[parameters('virtualNetwork').managementNetworkSecurityGroupName]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "NSG - Default Subnet"
+            },
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "internet-rdp-in-allow",
+                        "properties": {
+                        "description": "Allow RDP",
+                        "protocol": "Tcp",
+                        "sourcePortRange": "*",
+                        "destinationPortRange": "3389",
+                        "sourceAddressPrefix": "Internet",
+                        "destinationAddressPrefix": "*",
+                        "access": "Allow",
+                        "priority": 120,
+                        "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "internet-pshttps-in-allow",
+                        "properties": {
+                        "description": "Allow https PowerShell remoting",
+                        "protocol": "Tcp",
+                        "sourcePortRange": "*",
+                        "destinationPortRange": "5986",
+                        "sourceAddressPrefix": "Internet",
+                        "destinationAddressPrefix": "*",
+                        "access": "Allow",
+                        "priority": 121,
+                        "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "internet-https-in-allow",
+                        "properties": {
+                        "description": "Allow https PowerShell remoting",
+                        "protocol": "Tcp",
+                        "sourcePortRange": "*",
+                        "destinationPortRange": "443",
+                        "sourceAddressPrefix": "Internet",
+                        "destinationAddressPrefix": "*",
+                        "access": "Allow",
+                        "priority": 140,
+                        "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('virtualNetwork').Name]",
+            "apiVersion": "[variables('apiVersion').network.virtualNetwork]",
+            "location": "[variables('resourceLocation')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('virtualNetwork').managementNetworkSecurityGroupName)]"
+            ],
+            "tags": {
+                "displayName" : "VNET - SBS"
+            },
+            "properties": {
+                "dhcpOptions": {
+                    "dnsServers":"[parameters('DNS')]"
+                },
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('virtualNetwork').addressPrefix]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name" : "[parameters('virtualNetwork').ManagementSubnetName]",
+                        "properties": {
+                            "addressPrefix": "[parameters('virtualNetwork').managementSubnetAddressPrefix]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('virtualNetwork').managementNetworkSecurityGroupName)]"
+                            }
+                        } 
+                    },
+                    {
+                        "name" : "GatewaySubnet",
+                        "properties" : {
+                            "addressPrefix" : "[parameters('virtualNetwork').gatewaySubnetAddressPrefix]"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

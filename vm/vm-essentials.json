@@ -1,0 +1,253 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vm":{
+            "type": "object",
+            "metadata": {
+                "description": "The Active Directory Domain Services VM. The parameter should contain the following properties;Name, virtualNetworkName, virtualNetworkSubnetName and the username"
+            }
+        },
+        "adminPassword" : {
+          "type": "securestring",
+          "metadata": {
+            "description" : "The admin password"
+          }
+        },
+        "domainAdminPassword" : {
+          "type": "securestring",
+          "metadata": {
+            "description" : "The domain admin password"
+          }
+        },
+        "workspaceName" : {
+            "type": "string",
+            "metadata": {
+                "description" : "the workspacename"
+            }
+        }
+       
+    },
+    "variables":{
+        "baseTemplateUri" : "https://inovativbe.blob.core.windows.net/sbstemplate/",
+        "domainName":"[parameters('vm').domainName]",
+        "apiVersion" : {
+            "network" : {
+                "virtualNetwork" : "2016-03-30",
+                "networkSecurityGroups" : "2016-03-30",
+                "publicIPAddresses" : "2016-03-30",
+                "networkInterfaces" : "2016-03-30"
+            },
+            "storage" : {
+                "storageAccounts" : "2016-01-01"
+            },
+            "compute" : {
+                "virtualMachines" : "2015-06-15"
+            }
+        },
+        "resourceLocation" : "[resourceGroup().location]",
+        "vmVariable" : {
+            "storageAccountName" : "[concat('sta', uniquestring(resourceGroup().id, parameters('vm').name))]",
+            "storageAccountType": "Standard_LRS",
+            "vmStorageAccountContainerName": "vhds",
+            "imagePublisher" :"MicrosoftWindowsServerEssentials",
+            "imageOffer": "WindowsServerEssentials",
+            "imageSku" : "WindowsServerEssentials",
+            "osDiskName" : "[concat('osDisk','-',parameters('vm').name)]",
+            "publicIPAddressName": "[concat('pip','-',parameters('vm').name)]",
+            "publicIPAddressType": "Dynamic",
+            "networkInterfaceName" : "[concat('nic','-',parameters('vm').name)]",
+            "vmSize": "[parameters('vm').vmSize]",
+            "DataDisk": "ADDataDisk",
+            "DataDiskSize": 1000
+        },
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vm').virtualNetworkName)]",
+        "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('vm').virtualNetworkSubnetName)]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('vmVariable').storageAccountName]",
+            "apiVersion": "[variables('apiVersion').storage.storageAccounts]",
+            "location": "[resourceGroup().location]",
+            "kind": "Storage",
+            "tags": {
+                "DisplayName" : "[concat('STA - storage for VM ',parameters('vm').name)]"
+            },
+            "sku": {
+                "name" : "[variables('vmVariable').storageAccountType]"
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion').network.publicIPAddresses]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('vmVariable').publicIPAddressName]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "[variables('vmVariable').publicIPAddressType]",
+                "dnsSettings": {
+                    "domainNameLabel": "[tolower(replace(parameters('vm').domainName,'.local',''))]"
+                }
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion').network.networkInterfaces]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('vmVariable').networkInterfaceName]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('vmVariable').publicIPAddressName)]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                {
+                    "name": "ipconfig1",
+                    "properties": {
+                        "privateIPAllocationMethod": "[variables('vmVariable').publicIPAddressType]",
+                        "publicIPAddress": {
+                            "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('vmVariable').publicIPAddressName)]"
+                        },
+                        "subnet": {
+                            "id": "[variables('subnetRef')]"
+                        }
+                    }
+                }
+                ]
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion').compute.virtualMachines]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('vm').name]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "BusinessHours":"true"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('vmVariable').storageAccountName)]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('vmVariable').networkInterfaceName)]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('vmVariable').vmSize]"
+                },
+                "osProfile": {
+                "computerName": "[parameters('vm').name]",
+                "adminUsername": "[parameters('vm').adminUsername]",
+                "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                "imageReference": {
+                    "publisher": "[variables('vmVariable').imagePublisher]",
+                    "offer": "[variables('vmVariable').imageOffer]",
+                    "sku": "[variables('vmVariable').imageSku]",
+                    "version": "latest"
+                },
+                "osDisk": {
+                    "name": "[variables('vmVariable').osDiskName]",
+                    "vhd": {
+                    "uri": "[concat('http://',variables('vmVariable').storageAccountName,'.blob.core.windows.net/',variables('vmVariable').vmStorageAccountContainerName,'/',variables('vmVariable').osDiskName,'.vhd')]"
+                    },
+                    "caching": "ReadWrite",
+                    "createOption": "FromImage"
+                },
+                "dataDisks": [
+                ]
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                        "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('vmVariable').networkInterfaceName)]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": "true",
+                        "storageUri": "[concat('http://',variables('vmVariable').storageAccountName,'.blob.core.windows.net')]"
+                    }
+                }
+            },
+            "resources": [
+               {
+                    "type": "Microsoft.Compute/virtualMachines/extensions",
+                    "name": "[concat(parameters('vm').name,'/Antivirus')]",
+                    "apiVersion": "[variables('apiVersion').compute.virtualMachines]",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', parameters('vm').name)]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Azure.Security",
+                        "type": "IaaSAntimalware",
+                        "typeHandlerVersion": "1.1",
+                        "settings": {
+                        "AntimalwareEnabled": "true",
+                        "Exclusions": {
+                            "Processes": "taskmgr.exe"
+                        },
+                        "RealtimeProtectionEnabled": "true",
+                        "ScheduledScanSettings": {
+                            "isEnabled": "true",
+                            "scanType": "Quick",
+                            "day": "7",
+                            "time": "120"
+                        }
+                        },
+                        "protectedSettings": null
+                    }
+                },
+             
+                {
+                    "type": "Microsoft.Compute/virtualMachines/extensions",
+                    "name": "[concat(parameters('vm').name,'/dscDCConfiguration')]",
+                    "apiVersion": "[variables('apiVersion').compute.virtualMachines]",
+                    "location": "[resourceGroup().location]",
+                    "tags": {
+                        "displayName":"dscDC"
+                    },
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', parameters('vm').name)]"
+                ],
+                "properties": {
+                    "publisher": "Microsoft.PowerShell",
+                    "type": "DSC",
+                    "typeHandlerVersion": "2.9",
+                    "autoUpgradeMinorVersion": true,
+                    "settings": {
+                        "configuration":{
+                            "url": "[concat('https://inovativbe.blob.core.windows.net/sbstemplate/', 'dsc', '/DSC-SMB.zip')]",
+                            "script":"DSC_Configuration_SMB.ps1",
+                            "function":"SMB"
+                        },
+                        "configurationArguments": {
+                            "domainName": "[parameters('vm').domainName]",
+                            "NodeName":"[parameters('vm').name]",
+                            "OMSWorkSpaceId":"[reference(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName')), '2015-03-20').customerId]"
+                            
+                            }
+                        ,
+                        "configurationData":{
+                        "url": "[concat('https://inovativbe.blob.core.windows.net/sbstemplate/','dsc', '/DSC_Data_SMB_',parameters('vm').dscProfile,'.psd1')]"
+                        }
+                    }
+                    ,
+                    "protectedSettings": {
+                        "configurationArguments": {
+                            "domainAdminCredentials":{
+                                "username":"[parameters('vm').adminUsername]",
+                                "password": "[parameters('adminPassword')]"
+                            },
+                            "OMSWorkSpaceKey":"[listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName')), '2015-03-20').primarySharedKey]"
+                        }
+                            
+                        }
+                    }
+
+                }
+
+    ]
+    }
+    
+    ]}
+        

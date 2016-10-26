@@ -1,0 +1,134 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "deploymentSettings" : {
+            "type": "object",
+            "metadata": {
+                "description" : "the infrastructure object (domain name, vmsize"
+            }
+        },
+        "virtualNetworkSettings" : {
+            "type": "object",
+            "metadata": {
+                "description" : "the virtual network object"
+            }
+        },
+        "omsRecoveryServicesSettings" : {
+            "type": "object",
+            "metadata": {
+                "description" : "the recovery services object"
+            }
+        },
+        "omsSettings" : {
+            "type": "object",
+            "metadata": {
+                "description" : "the recovery services object"
+            }
+        },
+        "adminPassword" : {
+          "type": "securestring",
+          "metadata": {
+            "description" : "The admin password"
+          }
+        },
+        "domainAdminPassword" : {
+          "type": "securestring",
+          "metadata": {
+            "description" : "The domain admin password"
+          }
+        }
+    },
+    "variables": {
+        "baseTemplateUri" : "https://inovativbe.blob.core.windows.net/sbstemplate/"
+    },
+    "resources": [
+        {
+            "name": "vmPrimaryDeployment",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "dependsOn": [
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('baseTemplateUri'),'vm/vm-essentials.json' )]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vm": {
+                        "value": {
+                            "name": "[parameters('deploymentSettings').primaryVmName]",
+                            "vmSize": "[parameters('deploymentSettings').vmSize]",
+                            "virtualNetworkName": "[parameters('virtualNetworkSettings').name]",
+                            "virtualNetworkSubnetName": "[parameters('virtualNetworkSettings').managementSubnetName]",
+                            "adminUsername": "sysadmin",
+                            "domainName": "[parameters('deploymentSettings').domainName]",
+                            "dscProfile":"[parameters('deploymentSettings').customerSize]",
+                            "templateUri":"[variables('baseTemplateUri')]"
+                        }
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "domainAdminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "workspaceName": {
+                        "value": "[parameters('omsSettings').workspaceName]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "vmPrimaryOmsOnboardRecoveryServicesVaultDeployment",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/vmPrimaryDeployment"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[parameters('omsRecoveryServicesSettings').onboarding]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "recoveryServicesVaultName": {
+                        "value": "[parameters('omsSettings').recoveryServicesVaultName]"
+                    },
+                    "vmName": {
+                        "value": "[parameters('deploymentSettings').primaryVmName]"
+                    },
+                    "backupPolicyName": {
+                        "value": "defaultPolicy-01"
+                    }
+                }
+            }
+        },
+        {
+            "name": "DNSDeployment",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/vmPrimaryDeployment"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('baseTemplateUri'),'vnet/network-',parameters('deploymentSettings').customerSize,'.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "virtualNetwork": {
+                        "value": "[parameters('virtualNetworkSettings')]"
+                    },
+                    "DNS":{
+                        "value":"[parameters('virtualNetworkSettings').dnsServers]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

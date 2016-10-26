@@ -1,0 +1,46 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "recoveryServicesVaultName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Existing Recovery Services Vault (Vault and VM to be protected must be in same GEO)"
+            }
+        },
+        "vmName" : {
+            "type": "string",
+            "metadata": {
+                "description" : "the name of the virtual machine you would like to backup"
+            }
+        },
+        "backupPolicyName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of existing Backup Policy in same Recovery Services Vault."
+            }
+        },
+        "type" : {
+            "type": "string",
+            "allowedValues": [
+                "ARM",
+                "Classic"
+            ],
+            "defaultValue": "ARM",
+            "metadata": {
+                "description" : "the type of the VM protected item, should be ARM or Classic"
+            }
+        },
+        "region" : {
+            "type": "string",
+            "defaultValue": "westeurope",
+            "metadata": {
+                "description" : "the region to deploy the Recovery Services Vault to."
+            }
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+    ]
+}

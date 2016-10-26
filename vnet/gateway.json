@@ -1,0 +1,66 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "virtualNetworkSettings" : {
+            "type": "object",
+            "metadata": {
+                "description" : "the virtual network settings object"
+            }
+        },
+        "vpnGatewaySettings" : {
+            "type": "object",
+            "metadata": {
+                "description" : "the vpn gateway settings object"
+            }
+        }
+    },
+    "variables": {
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkSettings').name)]",
+        "gatewaySubnetRef": "[concat(variables('vnetID'),'/subnets/','GatewaySubnet')]",
+        "api-version": "2015-06-15"
+    },
+    "resources": [
+      {
+        "apiVersion": "[variables('api-version')]",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[parameters('vpnGatewaySettings').publicIPName]",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "publicIPAllocationMethod": "Dynamic"
+        }
+      },
+      {
+        "apiVersion": "[variables('api-version')]",
+        "type": "Microsoft.Network/virtualNetworkGateways",
+        "name": "[parameters('vpnGatewaySettings').name]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[concat('Microsoft.Network/publicIPAddresses/', parameters('vpnGatewaySettings').publicIpName)]"
+        ],
+        "properties": {
+          "ipConfigurations": [
+            {
+              "properties": {
+                "privateIPAllocationMethod": "Dynamic",
+                "subnet": {
+                  "id": "[variables('gatewaySubnetRef')]"
+                },
+                "publicIPAddress": {
+                  "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('vpnGatewaySettings').publicIpName)]"
+                }
+              },
+              "name": "vnetGatewayConfig"
+            }
+          ],
+          "sku": {
+            "name": "[parameters('vpnGatewaySettings').sku]",
+            "tier": "[parameters('vpnGatewaySettings').sku]"
+          },
+          "gatewayType": "Vpn",
+          "vpnType": "[parameters('vpnGatewaySettings').vpnType]",
+          "enableBgp": "false"
+        }
+      }
+    ]
+}

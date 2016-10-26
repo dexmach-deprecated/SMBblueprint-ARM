@@ -1,0 +1,26 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {     
+      "vm": {
+        "value": {
+          "name" : "sra-02",
+          "vmSize" : "Standard_A1",
+          "virtualNetworkName": "client-vnet-default",
+          "virtualNetworkSubnetName" : "sn-management",
+          "adminUsername" : "sysadmin",
+          "domainName" : "client.local",
+          "domainUsername" : "domainsysadmin"
+        }
+      },
+      "adminPassword" : {
+          "value": "MySuperSecretPasswordThatNobodyKnows1*"
+      },
+      "domainAdminPassword" : {
+          "value": "MySuperSecretPasswordThatNobodyKnows1*"
+      },
+      "workspaceName" : {
+          "value": "sbs-oms-test"
+      }
+    }
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {     
+      "customerName": {
+        "value": "smb"
+      },
+      "customerSize" : {
+        "value" : "large"
+      },
+      "sql" : {
+        "value": "small"
+      },
+      "vm" : {
+        "value": "medium"
+      },
+      "adminPassword" : {
+          "value": "MySuperSecretPasswordThatNobodyKnows1*"
+      },
+      "backupEnabled" : {
+          "value": "standard"
+      },
+      "vpnGateway" : {
+        "value": "basic"
+      }
+    }
+}

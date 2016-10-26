@@ -1,0 +1,464 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "customerName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the client"
+            }
+        },
+        "customerSize": {
+            "type": "string",
+            "allowedValues": [
+                "small",
+                "medium",
+                "large"
+            ],
+            "defaultValue": "small",
+            "metadata": {
+                "description": "The size of the customer (used for deployments)"
+            }
+        },
+        "sql": {
+            "type": "string",
+            "defaultValue": "none",
+            "allowedValues": [
+                "none",
+                "small"
+            ],
+            "metadata": {
+                "description": "The azure sql size, defaults to none"
+            }
+        },
+        "vm": {
+            "type": "string",
+            "defaultValue": "none",
+            "allowedValues": [
+                "none",
+                "small",
+                "medium"
+            ],
+            "metadata": {
+                "description": "An additional VM  size if choosen"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "the administrator password"
+            }
+        },
+        "backupEnabled": {
+            "type": "string",
+            "defaultValue": "standard",
+            "allowedValues": [
+                "none",
+                "standard"
+            ],
+            "metadata": {
+                "description": "Wheter recovery services needs to be enabled or not"
+            }
+        },
+        "vpnGateway": {
+            "type": "string",
+            "defaultValue": "none",
+            "allowedValues": [
+                "none",
+                "basic",
+                "standard",
+                "highperformace"
+            ]
+        },
+         "scheduleid01":{
+            "type":"string"
+        },
+        "scheduleid02":{
+            "type":"string"
+        }
+    },
+    "variables": {
+        "baseTemplateUri": "https://inovativbe.blob.core.windows.net/sbstemplate/",
+        "customerName": "[parameters('customerName')]",
+        "admin": "sysadmin",
+        "vpnGatewaySettings": {
+            "name": "[concat(variables('customerName'),'-gw-default')]",
+            "sku": "[variables(concat('vpnGatewaySize-', parameters('vpnGateway'))).sku]",
+            "template": "[variables(concat('vpnGatewaySize-', parameters('vpnGateway'))).template]",
+            "vpnType": "RouteBased",
+            "publicIpName": "[concat(variables('customerName'),'-pip-gateway01')]"
+        },
+        "vpnGatewaySize-none": {
+            "sku": "",
+            "template": "[concat(variables('baseTemplateUri'), 'vnet/gateway-none.json')]"
+        },
+        "vpnGatewaySize-basic": {
+            "sku": "Basic",
+            "template": "[concat(variables('baseTemplateUri'), 'vnet/gateway.json')]"
+        },
+        "vpnGatewaySize-standard": {
+            "sku": "Standard",
+            "template": "[concat(variables('baseTemplateUri'), 'vnet/gateway.json')]"
+        },
+        "vpnGatewaySize-highperformance": {
+            "sku": "HighPerformance",
+            "template": "[concat(variables('baseTemplateUri'), 'vnet/gateway.json')]"
+        },
+        "omsRecoveryServicesVaultTemplates": "[variables(concat('omsRecoveryServicesVaultTemplate-', parameters('backupEnabled')))]",
+        "omsRecoveryServicesVaultTemplate-none": {
+            "recoveryServicesVault": "[concat(variables('baseTemplateUri'), 'oms/recoveryservicesvault-none.json')]",
+            "onboarding": "[concat(variables('baseTemplateUri'), 'oms/onboardVmRecoveryServicesVault-none.json')]"
+        },
+        "omsRecoveryServicesVaultTemplate-standard": {
+            "recoveryServicesVault": "[concat(variables('baseTemplateUri'), 'oms/recoveryservicesvault.json')]",
+            "onboarding": "[concat(variables('baseTemplateUri'), 'oms/onboardVmRecoveryServicesVault.json')]"
+        },
+        "omsSettings": {
+            "workspaceName": "[concat(variables('customerName'),'-oms-', uniqueString(subscription().subscriptionId,resourceGroup().id))]",
+            "workspaceSku": "Free",
+            "recoveryServicesVaultName": "[concat(variables('customerName'),'-rsv-', uniqueString(subscription().subscriptionId,resourceGroup().id))]",
+            "recoveryServicesSku": "Standard",
+            "automationAccountName": "[concat(variables('customerName'),'-aa-', uniqueString(subscription().subscriptionId,resourceGroup().id))]",
+            "automationAccountSku": "Free",
+            "region": "[resourceGroup().location]"
+        },
+        "deploymentSettings": {
+            "vmSize": "[variables(concat('deploymentSize-', parameters('CustomerSize'))).vmSize]",
+            "numberOfExtraServers" : "[variables(concat('deploymentSize-', parameters('CustomerSize'))).numberOfExtraServers]",
+            "primaryVmName": "sra-01",
+            "domainName": "[concat(variables('customerName'), '.local')]",
+            "infrastructureTemplate" : "[variables(concat('deploymentSize-', parameters('CustomerSize'))).infrastructureTemplate]",
+            "customerSize":"[parameters('customerSize')]"
+        },
+        "deploymentSize-small": {
+            "vmSize": "Standard_DS1_v2",
+            "numberOfExtraServers" : 0,
+            "infrastructureTemplate" : "[concat(variables('baseTemplateUri'), 'infra/infrastructure-small.json')]"
+        },
+        "deploymentSize-medium": {
+            "vmSize": "Standard_DS2_v2",
+            "numberOfExtraServers" : 0,
+            "infrastructureTemplate" : "[concat(variables('baseTemplateUri'), 'infra/infrastructure-medium.json')]"
+        },
+        "deploymentSize-large": {
+            "vmSize": "Standard_DS4_v2",
+            "numberOfExtraServers" : 2,
+            "infrastructureTemplate" : "[concat(variables('baseTemplateUri'), 'infra/infrastructure-large.json')]"
+        },
+        "azureSqlSize": "[variables(concat('azureSqlSize', parameters('sql')))]",
+        "azureSqlSizenone": {
+            "template": "[concat(variables('baseTemplateUri'), 'sql/sql-none.json')]",
+            "edition": "",
+            "maxSizeBytes": "",
+            "requestedServiceObjectiveName": ""
+        },
+        "azureSqlSizesmall": {
+            "template": "[concat(variables('baseTemplateUri'), 'sql/sql-azure.json')]",
+            "edition": "Basic",
+            "maxSizeBytes": "1073741824",
+            "requestedServiceObjectiveName": "Basic"
+        },
+        "vmAdditionalSize": "[Variables(concat('vmAdditionalSize', parameters('vm')))]",
+        "vmAdditionalSizenone": {
+            "template": "[concat(variables('baseTemplateUri'), 'vm/vm-none.json')]",
+            "omsRecoveryServicesTemplate": "[variables(concat('omsRecoveryServicesVaultTemplate-',parameters('backupEnabled'))).onboarding]",
+            "vmSize": ""
+        },
+        "vmAdditionalSizesmall": {
+            "template": "[concat(variables('baseTemplateUri'), 'vm/vm-additional.json')]",
+           "omsRecoveryServicesTemplate": "[variables(concat('omsRecoveryServicesVaultTemplate-',parameters('backupEnabled'))).onboarding]",
+            "vmSize": "Standard_DS1_v2"
+        },
+        "vmAdditionalSizemedium": {
+            "template": "[concat(variables('baseTemplateUri'), 'vm/vm-additional.json')]",
+            "omsRecoveryServicesTemplate": "[variables(concat('omsRecoveryServicesVaultTemplate-',parameters('backupEnabled'))).onboarding]",
+            "vmSize": "Standard_DS2_v2"
+        },
+        "virtualNetworkSettings": {
+            "name": "[concat(variables('customerName'),'-vnet-default')]",
+            "AddressPrefix": "10.3.0.0/16",
+            "managementSubnetName": "sn-managementServices",
+            "managementSubnetAddressPrefix": "10.3.1.0/24",
+            "managementNetworkSecurityGroupName": "nsg-management",
+            "dnsServers":["10.3.1.4"],
+            "dmzSubnetName": "sn-dmzServices",
+            "dmzSubnetAddressPrefix": "10.3.2.0/24",
+            "dmzNetworkSecurityGroupname": "nsg-dmz",
+            "databaseSubnetName": "sn-databaseServices",
+            "databaseSubnetAddressPrefix": "10.3.3.0/24",
+            "databaseNetworkSecurityGroupName": "nsg-database",
+            "emergencySubnetName": "sn-emergencyServices",
+            "emergencySubnetAddressPrefix": "10.3.4.0/24",
+            "emergencyNetworkSecurityGroupName": "nsg-emergency",
+            "gatewaySubnetAddressPrefix": "10.3.5.0/24",
+            "templateUri":"[variables('baseTemplateUri')]"
+        }
+        ,
+        "azuresql": {
+            "databaseName": "[concat(variables('customerName'),'-sql-01')]",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "administratorLogin": "sysadmin"
+        },
+        "templates": {
+            "virtualNetwork": "[concat(variables('baseTemplateUri'), 'vnet/network-', parameters('CustomerSize'), '.json')]",
+            "omsWorkspace": "[concat(variables('baseTemplateUri'), 'oms/omsworkspace.json')]",
+            "omsRecoveryServicesVault": "[variables('omsRecoveryServicesVaultTemplates').recoveryServicesVault]",
+            "omsRecoveryServicesOnboarding": "[variables('omsRecoveryServicesVaultTemplates').onboarding]",
+            "omsAutomationAccount": "[concat(variables('baseTemplateUri'), 'oms/omsAutomationAccount.json')]",
+            "vmPrimary": "[concat(variables('baseTemplateUri'), 'vm/vm-essentials.json')]"
+        }
+    },
+    "resources": [
+        {
+            "name": "networkDeployment",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "dependsOn": [],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('templates').virtualNetwork]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "virtualNetwork": {
+                        "value": "[variables('virtualNetworkSettings')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "gatewayDeployment",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/networkDeployment"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('vpnGatewaySettings').template]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "virtualNetworkSettings": {
+                        "value": "[variables('virtualNetworkSettings')]"
+                    },
+                    "vpnGatewaySettings": {
+                        "value": "[variables('vpnGatewaySettings')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "omsWorkspaceDeployment",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "dependsOn": [],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('templates').omsWorkspace]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "name": {
+                        "value": "[variables('omsSettings').workspaceName]"
+                    },
+                    "region": {
+                        "value": "[variables('omsSettings').region]"
+                    },
+                    "plan": {
+                        "value": "[variables('omsSettings').workspaceSku]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "omsRecoveryServicesVaultDeployment",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "dependsOn": [],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('templates').omsRecoveryServicesVault]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vaultName": {
+                        "value": "[variables('omsSettings').recoveryServicesVaultName]"
+                    },
+                    "location": {
+                        "value": "[variables('omsSettings').region]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "omsAzureAutomationDeployment",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "dependsOn": [],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('templates').omsAutomationAccount]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "accountName": {
+                        "value": "[variables('omsSettings').automationAccountName]"
+                    },
+                    "scheduleid01":{
+                        "value": "[parameters('scheduleid01')]"
+                    },
+                     "scheduleid02":{
+                        "value": "[parameters('scheduleid02')]"
+                    }
+
+                }
+            }
+        },
+        {
+            "name": "InfrastructureDeployment",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/networkDeployment",
+                "Microsoft.Resources/deployments/omsWorkspaceDeployment",
+                "Microsoft.Resources/deployments/omsRecoveryServicesVaultDeployment"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('deploymentSettings').infrastructureTemplate]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "deploymentSettings": {
+                        "value": "[variables('deploymentSettings')]"
+                    },
+                    "virtualNetworkSettings": {
+                        "value": "[variables('virtualNetworkSettings')]"
+                    },
+                    "omsSettings": {
+                        "value": "[variables('omsSettings')]"
+                    },
+                    "omsRecoveryServicesSettings": {
+                        "value": "[variables('omsRecoveryServicesVaultTemplates')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "domainAdminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    }
+                }
+            }
+        },
+
+        {
+            "name": "vmAdditionalDeployment",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/networkDeployment",
+                "Microsoft.Resources/deployments/omsWorkspaceDeployment",
+                "Microsoft.Resources/deployments/InfrastructureDeployment"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('vmAdditionalSize').template]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vm": {
+                        "value": {
+                            "name": "[concat('sra-0', add(variables('deploymentSettings').numberOfExtraServers, 2))]",
+                            "vmSize": "[variables('vmAdditionalSize').vmSize]",
+                            "virtualNetworkName": "[variables('virtualNetworkSettings').name]",
+                            "virtualNetworkSubnetName": "[variables('virtualNetworkSettings').managementSubnetName]",
+                            "adminUsername": "[variables('admin')]",
+                            "domainName": "[concat(variables('customerName'), '.local')]",
+                            "dscProfile":"[parameters('customerSize')]"
+                        }
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "domainAdminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "workspaceName": {
+                        "value": "[variables('omsSettings').workspaceName]"
+                    }
+                }
+            }
+        },
+
+
+        {
+            "name": "vmAdditionalOmsOnboardRecoveryServicesVaultDeployment",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/vmAdditionalDeployment",
+                "Microsoft.Resources/deployments/omsRecoveryServicesVaultDeployment"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('vmAdditionalSize').omsRecoveryServicesTemplate]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "recoveryServicesVaultName": {
+                        "value": "[variables('omsSettings').RecoveryServicesVaultName]"
+                    },
+                    "vmName": {
+                        "value": "[concat('sra-0', add(variables('deploymentSettings').numberOfExtraServers, 2))]"
+                    },
+                    "backupPolicyName": {
+                        "value": "defaultPolicy-01"
+                    }
+                }
+            }
+        },
+        {
+            "name": "azuresqlDeployment",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "dependsOn": [],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('azureSqlSize').template]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "sql": {
+                        "value": {
+                            "databaseName": "[variables('azuresql').databaseName]",
+                            "collation": "[variables('azuresql').collation]",
+                            "edition": "[variables('azureSqlSize').edition]",
+                            "maxSizeBytes": "[variables('azureSqlSize').maxSizeBytes]",
+                            "requestedServiceObjectiveName": "[variables('azureSqlSize').requestedServiceObjectiveName]",
+                            "administratorLogin": "[variables('azuresql').administratorLogin]"
+                        }
+                    },
+                    "administratorLoginPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "urisql": {
+            "type": "string",
+            "value": "[concat(variables('baseTemplateUri'), variables('azureSqlSize').template)]"
+        }
+    }
+}

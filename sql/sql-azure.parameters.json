@@ -1,0 +1,19 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+      "sql" : {
+          "value" : {
+              "databaseName" : "sql-client-01",
+              "collation" : "SQL_Latin1_General_CP1_CI_AS",
+              "edition" : "Basic",
+              "maxSizeBytes" : "1073741824",
+              "requestedServiceObjectiveName" : "Basic",
+              "administratorLogin" : "adminsrv"
+          }
+      },
+      "administratorLoginPassword" : {
+          "value": "MySuperSecretPasswordThatNobodyKnows1*"
+      }
+    }
+}

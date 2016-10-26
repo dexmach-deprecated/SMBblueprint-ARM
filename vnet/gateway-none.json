@@ -1,0 +1,22 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "virtualNetworkSettings" : {
+            "type": "object",
+            "metadata": {
+                "description" : "the virtual network settings object"
+            }
+        },
+        "vpnGatewaySettings" : {
+            "type": "object",
+            "metadata": {
+                "description" : "the vpn gateway settings object"
+            }
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+    ]
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "deploymentSettings": {
+      "value": {
+        "vmSize": "Standard_DS1_v2",
+        "numberOfExtraServers": 2,
+        "primaryVmName": "sra-01",
+        "domainName" : "sbs.local"
+      }
+    },
+    "virtualNetworkSettings": {
+      "value": {
+        "name": "sbs-vnet-default",
+        "addressPrefix": "10.3.0.0/16",
+        "managementSubnetName": "sn-managementServices",
+        "managementSubnetAddressPrefix": "10.3.1.0/24",
+        "managementNetworkSecurityGroupName": "nsg-management",
+        "gatewaySubnetAddressPrefix": "10.3.9.0/24",
+        "dmzSubnetName": "sn-dmzServices",
+        "dmzSubnetAddressPrefix": "10.3.2.0/24",
+        "dmzNetworkSecurityGroupName": "nsg-dmz",
+        "emergencySubnetName": "sn-emergencyServices",
+        "emergencySubnetAddressPrefix": "10.3.3.0/24",
+        "emergencyNetworkSecurityGroupName": "nsg-emergency"
+      }
+    },
+    "omsSettings": {
+      "value": {
+        "workspaceName": "sbs-oms-tzs76clfplq7u",
+        "recoveryServicesVaultName": "sbs-rsv-tzs76clfplq7u"
+      }
+    },
+    "omsRecoveryServicesSettings": {
+      "value": {
+        "onboarding": "https://inovativbe.blob.core.windows.net/sbstemplate/oms/onboardVmRecoveryServicesVault.json"
+      }
+    },
+    "adminPassword": {
+      "value": "MySuperSecretPasswordThatNobodyKnows1*"
+    },
+    "domainAdminPassword": {
+      "value": "MySuperSecretPasswordThatNobodyKnows1*"
+    }
+  }
+}

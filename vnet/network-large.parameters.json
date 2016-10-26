@@ -1,0 +1,22 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+      "virtualNetwork" : {
+        "value" : {
+          "name" : "client-vnet-large",
+          "addressPrefix" : "10.3.0.0/16",
+          "managementSubnetName" : "sn-management",
+          "managementSubnetAddressPrefix" : "10.3.1.0/24",
+          "managementNetworkSecurityGroupName" : "nsg-management",
+          "gatewaySubnetAddressPrefix" : "10.3.9.0/24",
+          "dmzSubnetName" : "sn-dmz",
+          "dmzSubnetAddressPrefix" : "10.3.2.0/24",
+          "dmzNetworkSecurityGroupName" : "nsg-dmz",
+          "emergencySubnetName" : "sn-emergency",
+          "emergencySubnetAddressPrefix" : "10.3.3.0/24",
+          "emergencyNetworkSecurityGroupName" : "nsg-emergency"
+        }
+      }
+    }
+}

@@ -1,0 +1,170 @@
+{
+    "$schema": "http://schemas.microsoft.org/azure/deploymentTemplate?api-version=2015-01-01-preview#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "accountName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the Azure Automation account to deploy to."
+            }
+        },
+        "scheduleid01":{
+            "type":"string"
+        },
+        "scheduleid02":{
+            "type":"string"
+        }
+
+    },
+    "variables": {
+        "SingleQuote":"'",
+        "automationAccount" : {
+            "sku" : "Free",
+            "schedule01": "[parameters('scheduleid01')]",
+            "schedule02": "[parameters('scheduleid02')]"
+        }
+    },
+    "resources": [
+        {
+            "name": "[parameters('accountName')]",
+            "type": "Microsoft.Automation/automationAccounts",
+            "apiVersion": "2015-01-01-preview",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [],
+            "tags": {},
+            "properties": {
+                "sku": {
+                    "name": "[variables('automationAccount').sku]"
+                }
+            }
+        },
+        {
+            "name": "[concat(parameters('accountName'), '/Invoke-StartStopBusinessHoursVM')]",
+            "type": "Microsoft.Automation/automationAccounts/runbooks",
+            "apiVersion": "2015-01-01-preview",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'))]"
+            ],
+            "tags": { },
+            "properties": {
+              "runbookType": "PowerShell",
+              "logProgress": "false",
+              "logVerbose": "false",
+              "description": "Starts or Stops ARM based VM's based on tags",
+              "publishContentLink": {
+                "uri": "https://inovativbe.blob.core.windows.net/sbsscripts/Invoke-StartStopBusinessHoursVM.ps1",
+                "version": "1.0.0.0"
+              }
+            }
+          },
+        {
+            "name": "[concat(parameters('accountName'), '/Daily9AM')]",
+            "type": "microsoft.automation/automationAccounts/schedules",
+            "apiVersion": "2015-01-01-preview",
+            "dependsOn": [
+                "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'))]"
+            ],
+            "tags": { },
+            "properties": {
+                "description": "Daily 9AM schedule",
+                "startTime": "12/30/2016 09:00:00",
+                "isEnabled": "true",
+                "interval": "1",
+                "frequency": "day"
+            }
+        },
+        {
+            "name": "[concat(parameters('accountName'), '/', variables('automationAccount').schedule01)]",
+            "type": "microsoft.automation/automationAccounts/jobSchedules",
+            "apiVersion": "2015-01-01-preview",
+            "dependsOn": [
+                "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'))]",
+                "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/schedules/Daily9AM')]",
+                "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/Invoke-StartStopBusinessHoursVM')]"
+            ],
+            "tags": { },
+            "properties": {
+                "schedule": {
+                    "name": "Daily9AM"
+                },
+                "runbook": {
+                    "name": "Invoke-StartStopBusinessHoursVM"
+                },
+                "parameters" : {
+                    "action" : "Start"
+                }
+            }
+        },
+        {
+            "name": "[concat(parameters('accountName'), '/Daily9PM')]",
+            "type": "microsoft.automation/automationAccounts/schedules",
+            "apiVersion": "2015-01-01-preview",
+             "dependsOn": [
+                "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/Invoke-StartStopBusinessHoursVM')]",
+                "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'))]"
+            ],
+            "tags": { },
+            "properties": {
+                "description": "Daily 9PM schedule",
+                "startTime": "12/30/2016 21:00:00",
+                "isEnabled": "true",
+                "interval": "1",
+                "frequency": "day"
+            }
+        },
+        {
+            "name": "[concat(parameters('accountName'), '/', variables('automationAccount').schedule02)]",
+            "type": "microsoft.automation/automationAccounts/jobSchedules",
+            "apiVersion": "2015-01-01-preview",
+            "dependsOn": [
+                "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/Invoke-StartStopBusinessHoursVM')]",
+                "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'))]",
+                "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/schedules/Daily9PM')]"
+            ],
+            "tags": { },
+            "properties": {
+                "schedule": {
+                    "name": "Daily9PM"
+                },
+                "runbook": {
+                    "name": "Invoke-StartStopBusinessHoursVM"
+                }
+            }
+        },
+        {
+            "name": "[concat(parameters('accountName'), '/StartStopTagKeyValuePair') ]",
+            "type" : "microsoft.automation/automationAccounts/variables",
+            "apiVersion": "2015-01-01-preview",
+            "dependsOn": [
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'))]"
+            ],
+            "tags": { },
+            "properties": {
+                "description": "",
+                "isEncrypted": 0,
+                "type": "string",
+                "value": "'BusinessHours'"
+            }
+        },
+           {
+            "name": "[concat(parameters('accountName'), '/AzureSubscriptionId') ]",
+            "type" : "microsoft.automation/automationAccounts/variables",
+            "apiVersion": "2015-01-01-preview",
+            "dependsOn": [
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'))]"
+            ],
+            "tags": { },
+            "properties": {
+                "description": "",
+                "isEncrypted": 0,
+                "type": "string",
+                "value": "[concat(variables('singleQuote'),subscription().subscriptionId,variables('singleQuote'))]"
+            }
+        }
+       
+    ],
+    "outputs" : {
+
+    }
+}
