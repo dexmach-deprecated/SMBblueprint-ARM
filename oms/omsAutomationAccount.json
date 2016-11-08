@@ -13,6 +13,17 @@
         },
         "scheduleid02":{
             "type":"string"
+        },
+        "templateRootUri":{
+            "type":"string"
+        },
+        "scheduleStartDate":{
+            "type":"string",
+             "metadata": {
+                "description":"Date in 'YYYY/MM/DD' format, and at least one day ahead of the current day. Used to setup the automation schedule for the start/stop VM automation"
+            },
+            "defaultValue":"2099/12/31"
+
         }
 
     },
@@ -53,7 +64,7 @@
               "logVerbose": "false",
               "description": "Starts or Stops ARM based VM's based on tags",
               "publishContentLink": {
-                "uri": "https://inovativbe.blob.core.windows.net/sbsscripts/Invoke-StartStopBusinessHoursVM.ps1",
+                "uri": "[concat(parameters('templateRootUri'),'scripts/','Invoke-StartStopBusinessHoursVM.ps1')]",
                 "version": "1.0.0.0"
               }
             }
@@ -68,7 +79,7 @@
             "tags": { },
             "properties": {
                 "description": "Daily 9AM schedule",
-                "startTime": "12/30/2016 09:00:00",
+                "startTime": "[concat(parameters('scheduleStartDate'),' 09:00:00')]",
                 "isEnabled": "true",
                 "interval": "1",
                 "frequency": "day"
@@ -107,7 +118,7 @@
             "tags": { },
             "properties": {
                 "description": "Daily 9PM schedule",
-                "startTime": "12/30/2016 21:00:00",
+                "startTime": "[concat(parameters('scheduleStartDate'),' 21:00:00')]",
                 "isEnabled": "true",
                 "interval": "1",
                 "frequency": "day"
@@ -144,7 +155,7 @@
                 "description": "",
                 "isEncrypted": 0,
                 "type": "string",
-                "value": "'BusinessHours'"
+                "value": "'BusinessHours:true'"
             }
         },
            {

@@ -25,6 +25,9 @@
             "metadata": {
                 "description" : "the workspacename"
             }
+        },
+          "baseTemplateUri":{
+            "type":"string"
         }
   },
   "variables": {},

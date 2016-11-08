@@ -75,10 +75,17 @@
         },
         "scheduleid02":{
             "type":"string"
+        },
+        "scheduleStartDate":{
+            "metadata": {
+                "description":"Date in 'YYYY/MM/DD' format, and at least one day ahead of the current day. Used to setup the automation schedule for the start/stop VM automation"
+            },
+            "type":"string",
+            "defaultValue": "2099/12/01"
         }
     },
     "variables": {
-        "baseTemplateUri": "https://inovativbe.blob.core.windows.net/sbstemplate/",
+        "baseTemplateUri": "[replace(string(deployment().properties.templateLink.uri),'azuredeploy.json','')]",
         "customerName": "[parameters('customerName')]",
         "admin": "sysadmin",
         "vpnGatewaySettings": {
@@ -315,6 +322,12 @@
                     },
                      "scheduleid02":{
                         "value": "[parameters('scheduleid02')]"
+                    },
+                    "templateRootUri":{
+                        "value": "[variables('baseTemplateUri')]"
+                    },
+                    "scheduleStartDate":{
+                        "value": "[parameters('scheduleStartDate')]"
                     }
 
                 }
@@ -353,6 +366,9 @@
                     },
                     "domainAdminPassword": {
                         "value": "[parameters('adminPassword')]"
+                    },
+                    "baseTemplateUri":{
+                        "value":"[variables('baseTemplateUri')]"
                     }
                 }
             }
@@ -383,6 +399,7 @@
                             "adminUsername": "[variables('admin')]",
                             "domainName": "[concat(variables('customerName'), '.local')]",
                             "dscProfile":"[parameters('customerSize')]"
+                            
                         }
                     },
                     "adminPassword": {
@@ -393,6 +410,9 @@
                     },
                     "workspaceName": {
                         "value": "[variables('omsSettings').workspaceName]"
+                    },
+                    "baseTemplateUri":{
+                        "value":"[variables('baseTemplateUri')]"
                     }
                 }
             }

@@ -25,9 +25,13 @@
             "metadata": {
                 "description" : "the workspacename"
             }
+        },
+          "baseTemplateUri":{
+            "type":"string"
         }
     },
     "variables":{
+        "baseTemplateUri":"[parameters('baseTemplateUri')]",
         "apiVersion" : {
             "network" : {
                 "virtualNetwork" : "2016-03-30",
@@ -212,7 +216,7 @@
                     "autoUpgradeMinorVersion": true,
                     "settings": {
                         "configuration":{
-                            "url": "[concat('https://inovativbe.blob.core.windows.net/sbstemplate/', 'dsc', '/DSC-SMB.zip')]",
+                            "url": "[concat(variables('baseTemplateUri'),'dsc', '/DSC-SMB.zip')]",
                             "script":"DSC_Configuration_SMB.ps1",
                             "function":"SMB"
                         },
@@ -224,7 +228,7 @@
                             }
                         ,
                         "configurationData":{
-                        "url": "[concat('https://inovativbe.blob.core.windows.net/sbstemplate/','dsc', '/DSC_Data_SMB_',parameters('vm').dscProfile,'.psd1')]"
+                         "url": "[concat(variables('baseTemplateUri'),'dsc', '/DSC_Data_SMB_',parameters('vm').dscProfile,'.psd1')]"
                         }
                     }
                     ,

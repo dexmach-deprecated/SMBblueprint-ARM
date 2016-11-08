@@ -37,7 +37,7 @@ param(
 )
 
 Write-Verbose -Message 'Retrieving Azure Automation assets'
-$azureConnection = Get-AutomationConnection -Name 'AzureConnection'
+$azureConnection = Get-AutomationConnection -Name 'AzureRunAsConnection'
 $subscriptionId = Get-AutomationVariable -Name 'AzureSubscriptionId'
 # should be in the form "key:value" ; example "BusinessHours:true"
 $tagKeyValuePair = (Get-AutomationVariable -Name 'StartStopTagKeyValuePair') -split ':'
@@ -61,11 +61,10 @@ Catch {
 Write-Verbose -Message "Finding all resources with the given tag $tagKeyValuePair[0] and value $tagKeyValuePair[1]"
 Clear-Variable -Name params -ErrorAction Ignore
 $params = @{
-    ResourceType = 'Microsoft.Compute/virtualMachines'
     TagName = $tagKeyValuePair[0]
     TagValue = $tagKeyValuePair[1]
 }
-$resourceList = Find-AzureRmResource @params
+$resourceList = Find-AzureRmResource @params|?{$_.ResourceType -eq 'Microsoft.Compute/virtualMachines'}
 
 if($resourceList){
     Foreach($resource in $resourceList) {

@@ -37,10 +37,13 @@
           "metadata": {
             "description" : "The domain admin password"
           }
+        },
+         "baseTemplateUri":{
+            "type":"string"
         }
     },
     "variables": {
-        "baseTemplateUri" : "https://inovativbe.blob.core.windows.net/sbstemplate/"
+         "baseTemplateUri" : "[parameters('baseTemplateUri')]"
     },
     "resources": [
         {
@@ -75,6 +78,9 @@
                     },
                     "workspaceName": {
                         "value": "[parameters('omsSettings').workspaceName]"
+                    },
+                    "baseTemplateUri":{
+                        "value": "[variables('baseTemplateUri')]"
                     }
                 }
             }

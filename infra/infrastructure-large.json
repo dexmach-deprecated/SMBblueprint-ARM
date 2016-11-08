@@ -37,10 +37,13 @@
           "metadata": {
             "description" : "The domain admin password"
           }
+        },
+         "baseTemplateUri":{
+            "type":"string"
         }
     },
     "variables": {
-        "baseTemplateUri" : "https://inovativbe.blob.core.windows.net/sbstemplate/",
+        "baseTemplateUri" : "[parameters('baseTemplateUri')]",
         "vmJumpbox" : {
             "name" : "sra-jumpbox",
             "vmSize" : "Standard_A1"
@@ -79,6 +82,9 @@
                     },
                     "workspaceName": {
                         "value": "[parameters('omsSettings').workspaceName]"
+                    },
+                    "baseTemplateUri":{
+                        "value": "[variables('baseTemplateUri')]"
                     }
                 }
             }
@@ -142,6 +148,9 @@
                     },
                     "workspaceName": {
                         "value": "[parameters('omsSettings').workspaceName]"
+                    },
+                     "baseTemplateUri":{
+                        "value": "[variables('baseTemplateUri')]"
                     }
                 }
             },
@@ -213,6 +222,9 @@
                     },
                     "workspaceName": {
                         "value": "[parameters('omsSettings').workspaceName]"
+                    },
+                     "baseTemplateUri":{
+                        "value": "[variables('baseTemplateUri')]"
                     }
                 }
             }
