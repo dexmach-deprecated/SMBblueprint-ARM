@@ -53,9 +53,9 @@
             "storageAccountName" : "[concat('sta', uniquestring(resourceGroup().id, parameters('vm').name))]",
             "storageAccountType": "Standard_LRS",
             "vmStorageAccountContainerName": "vhds",
-            "imagePublisher" :"MicrosoftWindowsServerEssentials",
-            "imageOffer": "WindowsServerEssentials",
-            "imageSku" : "WindowsServerEssentials",
+            "imagePublisher" :"MicrosoftWindowsServer",
+            "imageOffer": "WindowsServer",
+            "imageSku" : "[parameters('vm').OS]",
             "osDiskName" : "[concat('osDisk','-',parameters('vm').name)]",
             "publicIPAddressName": "[concat('pip','-',parameters('vm').name)]",
             "publicIPAddressType": "Dynamic",
@@ -183,7 +183,8 @@
                     "properties": {
                         "publisher": "Microsoft.Azure.Security",
                         "type": "IaaSAntimalware",
-                        "typeHandlerVersion": "1.1",
+                        "typeHandlerVersion": "1.5",
+                        "autoUpgradeMinorVersion": true,
                         "settings": {
                         "AntimalwareEnabled": "true",
                         "Exclusions": {

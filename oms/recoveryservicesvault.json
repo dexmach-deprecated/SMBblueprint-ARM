@@ -11,9 +11,6 @@
         "location": {
             "type": "string",
             "defaultValue": "westeurope",
-            "allowedValues": [
-                "westeurope"
-            ],
             "metadata": {
                 "description": "This is the location where the recovery services vault will be created"
             }

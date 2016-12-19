@@ -67,7 +67,8 @@
                             "virtualNetworkSubnetName": "[parameters('virtualNetworkSettings').managementSubnetName]",
                             "adminUsername": "sysadmin",
                             "domainName": "[parameters('deploymentSettings').domainName]",
-                            "dscProfile":"[parameters('deploymentSettings').customerSize]"
+                            "dscProfile":"[parameters('deploymentSettings').customerSize]",
+                            "OS":"[parameters('deploymentSettings').OS]"
                         }
                     },
                     "adminPassword": {
@@ -107,6 +108,9 @@
                     },
                     "backupPolicyName": {
                         "value": "defaultPolicy-01"
+                    },
+                    "region":{
+                        "value":"[parameters('omsSettings').primaryRegion]"
                     }
                 }
             }

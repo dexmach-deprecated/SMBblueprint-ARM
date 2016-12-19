@@ -1,0 +1,43 @@
+{
+    "$schema": "http://schemas.microsoft.org/azure/deploymentTemplate?api-version=2015-01-01-preview#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "accountName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the Azure Automation account to deploy to."
+            }
+        },
+        "scheduleid01":{
+            "type":"string"
+        },
+        "scheduleid02":{
+            "type":"string"
+        },
+        "templateRootUri":{
+            "type":"string"
+        },
+        "scheduleStartDate":{
+            "type":"string",
+             "metadata": {
+                "description":"Date in 'YYYY/MM/DD' format, and at least one day ahead of the current day. Used to setup the automation schedule for the start/stop VM automation"
+            },
+            "defaultValue":"2099/12/31"
+
+        },
+        "region":{
+            "type":"string"
+        }
+
+    },
+    "variables": {
+     
+    },
+    "resources": [
+    
+       
+    ],
+    "outputs" : {
+
+    }
+}

@@ -14,6 +14,7 @@ Param (
 Import-DscResource -ModuleName PSDesiredStateConfiguration, xActiveDirectory,xComputerManagement,cRemoteDesktopServices,xCredSSP,xNetworking,xPSDesiredStateConfiguration
 $DependsOnAD = ""
 $DomainCred = new-object pscredential "$domainName\$($domainAdminCredentials.UserName)",$domainAdminCredentials.Password
+$OSVersion = new-object Version ((Get-CimInstance Win32_OperatingSystem).version)
 Node $NodeName {
 	LocalConfigurationManager
 		{
@@ -80,6 +81,11 @@ Node $NodeName {
             Arguments = '/C:"setup.exe /qn ADD_OPINSIGHTS_WORKSPACE=1 OPINSIGHTS_WORKSPACE_ID=' + $OMSWorkSpaceId + ' OPINSIGHTS_WORKSPACE_KEY=' + $OMSWorkSpaceKey + ' AcceptEndUserLicenseAgreement=1"'
             DependsOn = "[xRemoteFile]OIPackage"
         }
+
+		WindowsFeature Essentials {
+			Ensure = "Present"
+			Name = "ServerEssentialsRole"
+		}
     
 
 
@@ -195,13 +201,14 @@ Node $NodeName {
             Name = "RDS-Gateway"
 			DependsOn = $DependsOnAD
         }
-
-        WindowsFeature Desktop-Experience
-        {
-            Ensure = "Present"
-            Name = "Desktop-Experience"
-			DependsOn = $DependsOnAD
-        }
+		if($OSVersion.Major -lt 10){
+			WindowsFeature Desktop-Experience
+			{
+				Ensure = "Present"
+				Name = "Desktop-Experience"
+				DependsOn = $DependsOnAD
+			}
+		}
 
         WindowsFeature RSAT-RDS-Tools
         {
@@ -279,13 +286,14 @@ Node $NodeName {
             Name = "RDS-RD-Server"
 			DependsOn = $DependsOnAD
         }
-
-        WindowsFeature Desktop-Experience
-        {
-            Ensure = "Present"
-            Name = "Desktop-Experience"
-			DependsOn = $DependsOnAD
-        }
+		if($OSVersion.Major -lt 10){
+			WindowsFeature Desktop-Experience
+			{
+				Ensure = "Present"
+				Name = "Desktop-Experience"
+				DependsOn = $DependsOnAD
+			}
+		}
 
         WindowsFeature RSAT-RDS-Tools
         {

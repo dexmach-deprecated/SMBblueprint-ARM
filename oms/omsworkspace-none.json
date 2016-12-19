@@ -1,0 +1,39 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "name": {
+      "type": "string",
+      "defaultValue": "OMSLA",
+      "metadata": {
+        "description": "Assign a name for the Log Analytic Workspace Name"
+      }
+    },
+    "region": {
+      "type": "string",
+      "defaultValue": "westeurope",
+      "metadata": {
+        "description": "Specify the region for your Workspace"
+      }
+    },
+    "plan" : {
+        "type": "string",
+        "defaultValue": "Free",
+        "allowedValues": [
+            "Free",
+            "Basic",
+            "Premium"
+        ],
+        "metadata": {
+            "description" : "the sku for the OMS workspace"
+        }
+    }
+  },
+  "variables": {
+
+  },
+  "resources": [
+   
+  ],
+  "outputs": { }
+}

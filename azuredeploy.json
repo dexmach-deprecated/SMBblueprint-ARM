@@ -2,6 +2,26 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "useFallbackLocation":{
+            "type":"string",
+            "allowedValues": [
+                "yes",
+                "no"
+            ],
+            "defaultValue": "no"
+        },
+        "fallbackLocation":{
+            "type":"string",
+            "allowedValues": [
+                "southeastasia",
+                "westeurope",
+                "australiasoutheast"
+            ],
+            "defaultValue": "westeurope",
+            "metadata":{
+                "description":"Location to use for non globally available resources"
+            }
+        },
         "customerName": {
             "type": "string",
             "metadata": {
@@ -70,6 +90,17 @@
                 "highperformace"
             ]
         },
+         "managementEnabled": {
+            "type": "string",
+            "defaultValue": "free",
+            "allowedValues": [
+                "none",
+                "free"
+            ],
+            "metadata": {
+                "description": "Wheter management services (OMS) are enabled or not "
+            }
+        },
          "scheduleid01":{
             "type":"string"
         },
@@ -82,12 +113,30 @@
             },
             "type":"string",
             "defaultValue": "2099/12/01"
+        },
+        "OSVersion":{
+            "metadata": {
+                "description":"The OS version to use for the IaaS"
+            },
+            "type": "string",
+            "allowedValues": [
+                "2012R2",
+                "2016"
+            ],
+            "defaultValue": "2012R2"
+
         }
     },
     "variables": {
+        "fallbackLocation-yes":"[parameters('fallbackLocation')]",
+        "fallbackLocation-no":"[resourceGroup().location]",
         "baseTemplateUri": "[replace(string(deployment().properties.templateLink.uri),'azuredeploy.json','')]",
         "customerName": "[parameters('customerName')]",
         "admin": "sysadmin",
+        "OSVersion":{
+            "2012R2":"2012-R2-Datacenter",
+            "2016":"2016-Datacenter"
+        },
         "vpnGatewaySettings": {
             "name": "[concat(variables('customerName'),'-gw-default')]",
             "sku": "[variables(concat('vpnGatewaySize-', parameters('vpnGateway'))).sku]",
@@ -127,7 +176,8 @@
             "recoveryServicesSku": "Standard",
             "automationAccountName": "[concat(variables('customerName'),'-aa-', uniqueString(subscription().subscriptionId,resourceGroup().id))]",
             "automationAccountSku": "Free",
-            "region": "[resourceGroup().location]"
+            "region": "[variables(concat('fallbackLocation-',parameters('useFallbackLocation')))]",
+            "primaryRegion":"[resourcegroup().location]"
         },
         "deploymentSettings": {
             "vmSize": "[variables(concat('deploymentSize-', parameters('CustomerSize'))).vmSize]",
@@ -135,7 +185,8 @@
             "primaryVmName": "sra-01",
             "domainName": "[concat(variables('customerName'), '.local')]",
             "infrastructureTemplate" : "[variables(concat('deploymentSize-', parameters('CustomerSize'))).infrastructureTemplate]",
-            "customerSize":"[parameters('customerSize')]"
+            "customerSize":"[parameters('customerSize')]",
+            "OS":"[variables('OSVersion')[parameters('OSVersion')]]"
         },
         "deploymentSize-small": {
             "vmSize": "Standard_DS1_v2",
@@ -168,7 +219,7 @@
         "vmAdditionalSize": "[Variables(concat('vmAdditionalSize', parameters('vm')))]",
         "vmAdditionalSizenone": {
             "template": "[concat(variables('baseTemplateUri'), 'vm/vm-none.json')]",
-            "omsRecoveryServicesTemplate": "[variables(concat('omsRecoveryServicesVaultTemplate-',parameters('backupEnabled'))).onboarding]",
+            "omsRecoveryServicesTemplate": "[variables(concat('omsRecoveryServicesVaultTemplate-','none')).onboarding]",
             "vmSize": ""
         },
         "vmAdditionalSizesmall": {
@@ -208,10 +259,10 @@
         },
         "templates": {
             "virtualNetwork": "[concat(variables('baseTemplateUri'), 'vnet/network-', parameters('CustomerSize'), '.json')]",
-            "omsWorkspace": "[concat(variables('baseTemplateUri'), 'oms/omsworkspace.json')]",
+            "omsWorkspace": "[concat(variables('baseTemplateUri'), 'oms/omsworkspace-',parameters('managementEnabled'),'.json')]",
             "omsRecoveryServicesVault": "[variables('omsRecoveryServicesVaultTemplates').recoveryServicesVault]",
             "omsRecoveryServicesOnboarding": "[variables('omsRecoveryServicesVaultTemplates').onboarding]",
-            "omsAutomationAccount": "[concat(variables('baseTemplateUri'), 'oms/omsAutomationAccount.json')]",
+            "omsAutomationAccount": "[concat(variables('baseTemplateUri'), 'oms/omsAutomationAccount-',parameters('managementEnabled'),'.json')]",
             "vmPrimary": "[concat(variables('baseTemplateUri'), 'vm/vm-essentials.json')]"
         }
     },
@@ -297,7 +348,7 @@
                         "value": "[variables('omsSettings').recoveryServicesVaultName]"
                     },
                     "location": {
-                        "value": "[variables('omsSettings').region]"
+                        "value": "[variables('omsSettings').primaryRegion]"
                     }
                 }
             }
@@ -328,6 +379,9 @@
                     },
                     "scheduleStartDate":{
                         "value": "[parameters('scheduleStartDate')]"
+                    },
+                    "region":{
+                        "value":"[variables('omsSettings').region]"
                     }
 
                 }
@@ -398,7 +452,8 @@
                             "virtualNetworkSubnetName": "[variables('virtualNetworkSettings').managementSubnetName]",
                             "adminUsername": "[variables('admin')]",
                             "domainName": "[concat(variables('customerName'), '.local')]",
-                            "dscProfile":"[parameters('customerSize')]"
+                            "dscProfile":"[parameters('customerSize')]",
+                            "OS":"[variables('deploymentSettings').OS]",
                             
                         }
                     },
@@ -442,6 +497,9 @@
                     },
                     "backupPolicyName": {
                         "value": "defaultPolicy-01"
+                    },
+                    "region":{
+                        "value":"[variables('omsSettings').primaryRegion]"
                     }
                 }
             }
