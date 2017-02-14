@@ -72,6 +72,7 @@
                             "adminUsername": "sysadmin",
                             "domainName": "[parameters('deploymentSettings').domainName]",
                             "dscProfile":"[parameters('deploymentSettings').customerSize]",
+                            "storageType":"[parameters('deploymentSettings').storageType]",
                             "OS":"[parameters('deploymentSettings').OS]"
                         }
                     },
@@ -142,7 +143,8 @@
                             "adminUsername": "sysadmin",
                             "domainName": "[parameters('deploymentSettings').domainName]",
                             "dscProfile":"[parameters('deploymentSettings').customerSize]",
-                            "OS":"[parameters('deploymentSettings').OS]"
+                            "OS":"[parameters('deploymentSettings').OS]",
+                            "storageType":"[parameters('deploymentSettings').storageType]"
                         }
                     },
                     "adminPassword": {
@@ -219,7 +221,8 @@
                             "adminUsername": "sysadmin",
                             "domainName": "[parameters('deploymentSettings').domainName]",
                             "dscProfile":"[parameters('deploymentSettings').customerSize]",
-                            "OS":"[parameters('deploymentSettings').OS]"
+                            "OS":"[parameters('deploymentSettings').OS]",
+                            "storageType":"[parameters('deploymentSettings').storageType]"
 
                             
                         }

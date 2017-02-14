@@ -90,6 +90,21 @@
                 "highperformace"
             ]
         },
+
+        "storageType":{
+            "type":"string",
+            "metadata": {
+                "description":"The storage type to use for VM deployment"
+            },
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_ZRS",
+                "Standard_GRS",
+                "Standard_RAGRS",
+                "Premium_LRS"
+            ],
+            "defaultValue": "Standard_LRS"
+        },
          "managementEnabled": {
             "type": "string",
             "defaultValue": "free",
@@ -100,11 +115,18 @@
             "metadata": {
                 "description": "Wheter management services (OMS) are enabled or not "
             }
+
         },
          "scheduleid01":{
+              "metadata": {
+                "description":"This parameter must be a GUID for use with the Azure Automation Job Creation (eg: be55e7b7-ba86-48d6-9efd-49f3d310bcb9)"
+            },
             "type":"string"
         },
         "scheduleid02":{
+            "metadata": {
+                "description":"This parameter must be a GUID for use with the Azure Automation Job Creation (eg: be55e7b7-ba86-48d6-9efd-49f3d310bcb9)"
+            },
             "type":"string"
         },
         "scheduleStartDate":{
@@ -186,6 +208,7 @@
             "domainName": "[concat(variables('customerName'), '.local')]",
             "infrastructureTemplate" : "[variables(concat('deploymentSize-', parameters('CustomerSize'))).infrastructureTemplate]",
             "customerSize":"[parameters('customerSize')]",
+            "storageType":"[parameters('storageType')]",
             "OS":"[variables('OSVersion')[parameters('OSVersion')]]"
         },
         "deploymentSize-small": {
@@ -453,8 +476,8 @@
                             "adminUsername": "[variables('admin')]",
                             "domainName": "[concat(variables('customerName'), '.local')]",
                             "dscProfile":"[parameters('customerSize')]",
-                            "OS":"[variables('deploymentSettings').OS]",
-                            
+                            "storageType":"[parameters('storageType')]",
+                            "OS":"[variables('deploymentSettings').OS]"
                         }
                     },
                     "adminPassword": {

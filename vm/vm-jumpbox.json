@@ -49,7 +49,7 @@
         "resourceLocation" : "[resourceGroup().location]",
         "vmVariable" : {
             "storageAccountName" : "[concat('sta', uniquestring(resourceGroup().id, parameters('vm').name), 'vm')]",
-            "storageAccountType": "Standard_LRS",
+            "storageAccountType": "[parameters('vm').storageType]",
             "vmStorageAccountContainerName": "vhds",
             "imagePublisher" :"MicrosoftWindowsServer",
             "imageOffer": "WindowsServer",
@@ -76,7 +76,7 @@
                 "DisplayName" : "[concat('STA - storage for VM ',parameters('vm').name)]"
             },
             "sku": {
-                "name" : "[variables('vmVariable').storageAccountType]"
+                "name" : "Standard_LRS"
             }
         },
         {
@@ -158,7 +158,7 @@
                 },
                 "diagnosticsProfile": {
                     "bootDiagnostics": {
-                        "enabled": "true",
+                        "enabled": "false",
                         "storageUri": "[concat('http://',variables('vmVariable').storageAccountName,'.blob.core.windows.net')]"
                     }
                 }
