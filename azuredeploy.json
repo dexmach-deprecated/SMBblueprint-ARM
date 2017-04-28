@@ -1,25 +1,42 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
+    "contentVersion": "8.2.0.0",
     "parameters": {
-        "useFallbackLocation":{
-            "type":"string",
+        "logAnalyticsLocation": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "The location for the log analytics resources"
+            }
+        },
+        "automationLocation": {
+            "type": "securestring",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "descipion":"The location for the automation resources"
+            }
+        },
+        "useFallbackLocation": {
+            "type": "string",
             "allowedValues": [
                 "yes",
                 "no"
             ],
-            "defaultValue": "no"
+            "defaultValue": "no",
+            "metadata": {
+                "description":"(DEPRECATED) the location to use for the automation and log analytics resources if fallback location is used"
+            }
         },
-        "fallbackLocation":{
-            "type":"string",
+        "fallbackLocation": {
+            "type": "string",
             "allowedValues": [
                 "southeastasia",
                 "westeurope",
                 "australiasoutheast"
             ],
             "defaultValue": "westeurope",
-            "metadata":{
-                "description":"Location to use for non globally available resources"
+            "metadata": {
+                "description": "Location to use for non globally available resources"
             }
         },
         "customerName": {
@@ -90,11 +107,10 @@
                 "highperformace"
             ]
         },
-
-        "storageType":{
-            "type":"string",
+        "storageType": {
+            "type": "string",
             "metadata": {
-                "description":"The storage type to use for VM deployment"
+                "description": "The storage type to use for VM deployment"
             },
             "allowedValues": [
                 "Standard_LRS",
@@ -105,7 +121,7 @@
             ],
             "defaultValue": "Standard_LRS"
         },
-         "managementEnabled": {
+        "managementEnabled": {
             "type": "string",
             "defaultValue": "free",
             "allowedValues": [
@@ -115,30 +131,29 @@
             "metadata": {
                 "description": "Wheter management services (OMS) are enabled or not "
             }
-
         },
-         "scheduleid01":{
-              "metadata": {
-                "description":"This parameter must be a GUID for use with the Azure Automation Job Creation (eg: be55e7b7-ba86-48d6-9efd-49f3d310bcb9)"
-            },
-            "type":"string"
-        },
-        "scheduleid02":{
+        "scheduleid01": {
             "metadata": {
-                "description":"This parameter must be a GUID for use with the Azure Automation Job Creation (eg: be55e7b7-ba86-48d6-9efd-49f3d310bcb9)"
+                "description": "This parameter must be a GUID for use with the Azure Automation Job Creation (eg: be55e7b7-ba86-48d6-9efd-49f3d310bcb9)"
             },
-            "type":"string"
+            "type": "string"
         },
-        "scheduleStartDate":{
+        "scheduleid02": {
             "metadata": {
-                "description":"Date in 'YYYY/MM/DD' format, and at least one day ahead of the current day. Used to setup the automation schedule for the start/stop VM automation"
+                "description": "This parameter must be a GUID for use with the Azure Automation Job Creation (eg: be55e7b7-ba86-48d6-9efd-49f3d310bcb9)"
             },
-            "type":"string",
+            "type": "string"
+        },
+        "scheduleStartDate": {
+            "metadata": {
+                "description": "Date in 'YYYY/MM/DD' format, and at least one day ahead of the current day. Used to setup the automation schedule for the start/stop VM automation"
+            },
+            "type": "string",
             "defaultValue": "2099/12/01"
         },
-        "OSVersion":{
+        "OSVersion": {
             "metadata": {
-                "description":"The OS version to use for the IaaS"
+                "description": "The OS version to use for the IaaS"
             },
             "type": "string",
             "allowedValues": [
@@ -146,18 +161,26 @@
                 "2016"
             ],
             "defaultValue": "2012R2"
-
+        },
+        "SPNId":{
+            "metadata": {
+                "desciption":"The Id of the Automation SPN"
+            },
+            "type": "string",
+            "defaultValue": "00000000-0000-0000-0000-000000000000"
         }
     },
     "variables": {
-        "fallbackLocation-yes":"[parameters('fallbackLocation')]",
-        "fallbackLocation-no":"[resourceGroup().location]",
+        "fallbackLocationAutomation-yes": "[parameters('fallbackLocation')]",
+        "fallbackLocationAutomation-no": "[parameters('automationLocation')]",
+        "fallbackLocationLogAnalytics-yes": "[parameters('fallbackLocation')]",
+        "fallbackLocationLogAnalytics-no": "[parameters('logAnalyticsLocation')]",
         "baseTemplateUri": "[replace(string(deployment().properties.templateLink.uri),'azuredeploy.json','')]",
         "customerName": "[parameters('customerName')]",
         "admin": "sysadmin",
-        "OSVersion":{
-            "2012R2":"2012-R2-Datacenter",
-            "2016":"2016-Datacenter"
+        "OSVersion": {
+            "2012R2": "2012-R2-Datacenter",
+            "2016": "2016-Datacenter"
         },
         "vpnGatewaySettings": {
             "name": "[concat(variables('customerName'),'-gw-default')]",
@@ -194,37 +217,42 @@
         "omsSettings": {
             "workspaceName": "[concat(variables('customerName'),'-oms-', uniqueString(subscription().subscriptionId,resourceGroup().id))]",
             "workspaceSku": "Free",
+            "workspaceRegion":"[variables(concat('fallbackLocationLogAnalytics-',parameters('useFallbackLocation')))]",
             "recoveryServicesVaultName": "[concat(variables('customerName'),'-rsv-', uniqueString(subscription().subscriptionId,resourceGroup().id))]",
             "recoveryServicesSku": "Standard",
             "automationAccountName": "[concat(variables('customerName'),'-aa-', uniqueString(subscription().subscriptionId,resourceGroup().id))]",
             "automationAccountSku": "Free",
-            "region": "[variables(concat('fallbackLocation-',parameters('useFallbackLocation')))]",
-            "primaryRegion":"[resourcegroup().location]"
+            "automationRegion": "[variables(concat('fallbackLocationAutomation-',parameters('useFallbackLocation')))]",
+            "primaryRegion": "[resourcegroup().location]"
         },
         "deploymentSettings": {
             "vmSize": "[variables(concat('deploymentSize-', parameters('CustomerSize'))).vmSize]",
-            "numberOfExtraServers" : "[variables(concat('deploymentSize-', parameters('CustomerSize'))).numberOfExtraServers]",
+            "numberOfExtraServers": "[variables(concat('deploymentSize-', parameters('CustomerSize'))).numberOfExtraServers]",
             "primaryVmName": "sra-01",
             "domainName": "[concat(variables('customerName'), '.local')]",
-            "infrastructureTemplate" : "[variables(concat('deploymentSize-', parameters('CustomerSize'))).infrastructureTemplate]",
-            "customerSize":"[parameters('customerSize')]",
-            "storageType":"[parameters('storageType')]",
-            "OS":"[variables('OSVersion')[parameters('OSVersion')]]"
+            "infrastructureTemplate": "[variables(concat('deploymentSize-', parameters('CustomerSize'))).infrastructureTemplate]",
+            "customerSize": "[parameters('customerSize')]",
+            "storageType": "[parameters('storageType')]",
+            "OS": "[variables('OSVersion')[parameters('OSVersion')]]",
+            "osDiskSizeGB": "[variables(concat('deploymentSize-', parameters('CustomerSize'))).osDiskSizeGB]"
         },
         "deploymentSize-small": {
             "vmSize": "Standard_DS1_v2",
-            "numberOfExtraServers" : 0,
-            "infrastructureTemplate" : "[concat(variables('baseTemplateUri'), 'infra/infrastructure-small.json')]"
+            "osDiskSizeGB":250,
+            "numberOfExtraServers": 0,
+            "infrastructureTemplate": "[concat(variables('baseTemplateUri'), 'infra/infrastructure-small.json')]"
         },
         "deploymentSize-medium": {
             "vmSize": "Standard_DS2_v2",
-            "numberOfExtraServers" : 0,
-            "infrastructureTemplate" : "[concat(variables('baseTemplateUri'), 'infra/infrastructure-medium.json')]"
+            "osDiskSizeGB":500,
+            "numberOfExtraServers": 0,
+            "infrastructureTemplate": "[concat(variables('baseTemplateUri'), 'infra/infrastructure-medium.json')]"
         },
         "deploymentSize-large": {
             "vmSize": "Standard_DS4_v2",
-            "numberOfExtraServers" : 2,
-            "infrastructureTemplate" : "[concat(variables('baseTemplateUri'), 'infra/infrastructure-large.json')]"
+            "osDiskSizeGB":1000,
+            "numberOfExtraServers": 2,
+            "infrastructureTemplate": "[concat(variables('baseTemplateUri'), 'infra/infrastructure-large.json')]"
         },
         "azureSqlSize": "[variables(concat('azureSqlSize', parameters('sql')))]",
         "azureSqlSizenone": {
@@ -247,7 +275,7 @@
         },
         "vmAdditionalSizesmall": {
             "template": "[concat(variables('baseTemplateUri'), 'vm/vm-additional.json')]",
-           "omsRecoveryServicesTemplate": "[variables(concat('omsRecoveryServicesVaultTemplate-',parameters('backupEnabled'))).onboarding]",
+            "omsRecoveryServicesTemplate": "[variables(concat('omsRecoveryServicesVaultTemplate-',parameters('backupEnabled'))).onboarding]",
             "vmSize": "Standard_DS1_v2"
         },
         "vmAdditionalSizemedium": {
@@ -261,7 +289,9 @@
             "managementSubnetName": "sn-managementServices",
             "managementSubnetAddressPrefix": "10.3.1.0/24",
             "managementNetworkSecurityGroupName": "nsg-management",
-            "dnsServers":["10.3.1.4"],
+            "dnsServers": [
+                "10.3.1.4"
+            ],
             "dmzSubnetName": "sn-dmzServices",
             "dmzSubnetAddressPrefix": "10.3.2.0/24",
             "dmzNetworkSecurityGroupname": "nsg-dmz",
@@ -272,9 +302,8 @@
             "emergencySubnetAddressPrefix": "10.3.4.0/24",
             "emergencyNetworkSecurityGroupName": "nsg-emergency",
             "gatewaySubnetAddressPrefix": "10.3.5.0/24",
-            "templateUri":"[variables('baseTemplateUri')]"
-        }
-        ,
+            "templateUri": "[variables('baseTemplateUri')]"
+        },
         "azuresql": {
             "databaseName": "[concat(variables('customerName'),'-sql-01')]",
             "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -347,7 +376,7 @@
                         "value": "[variables('omsSettings').workspaceName]"
                     },
                     "region": {
-                        "value": "[variables('omsSettings').region]"
+                        "value": "[variables('omsSettings').workspaceRegion]"
                     },
                     "plan": {
                         "value": "[variables('omsSettings').workspaceSku]"
@@ -391,22 +420,28 @@
                     "accountName": {
                         "value": "[variables('omsSettings').automationAccountName]"
                     },
-                    "scheduleid01":{
+                    "scheduleid01": {
                         "value": "[parameters('scheduleid01')]"
                     },
-                     "scheduleid02":{
+                    "scheduleid02": {
                         "value": "[parameters('scheduleid02')]"
                     },
-                    "templateRootUri":{
+                    "templateRootUri": {
                         "value": "[variables('baseTemplateUri')]"
                     },
-                    "scheduleStartDate":{
+                    "scheduleStartDate": {
                         "value": "[parameters('scheduleStartDate')]"
                     },
-                    "region":{
-                        "value":"[variables('omsSettings').region]"
+                    "region": {
+                        "value": "[variables('omsSettings').automationRegion]"
+                    },
+                    "userName":{
+                        "value":"[parameters('SPNId')]"
+                    },
+                    "password":{
+                        "value":"[parameters('adminPassword')]"
                     }
-
+                   
                 }
             }
         },
@@ -444,13 +479,12 @@
                     "domainAdminPassword": {
                         "value": "[parameters('adminPassword')]"
                     },
-                    "baseTemplateUri":{
-                        "value":"[variables('baseTemplateUri')]"
+                    "baseTemplateUri": {
+                        "value": "[variables('baseTemplateUri')]"
                     }
                 }
             }
         },
-
         {
             "name": "vmAdditionalDeployment",
             "type": "Microsoft.Resources/deployments",
@@ -475,9 +509,10 @@
                             "virtualNetworkSubnetName": "[variables('virtualNetworkSettings').managementSubnetName]",
                             "adminUsername": "[variables('admin')]",
                             "domainName": "[concat(variables('customerName'), '.local')]",
-                            "dscProfile":"[parameters('customerSize')]",
-                            "storageType":"[parameters('storageType')]",
-                            "OS":"[variables('deploymentSettings').OS]"
+                            "dscProfile": "[parameters('customerSize')]",
+                            "storageType": "[parameters('storageType')]",
+                            "OS": "[variables('deploymentSettings').OS]",
+                            "osDiskSizeGB":"[variables('deploymentSettings').osDiskSizeGB]"
                         }
                     },
                     "adminPassword": {
@@ -489,14 +524,12 @@
                     "workspaceName": {
                         "value": "[variables('omsSettings').workspaceName]"
                     },
-                    "baseTemplateUri":{
-                        "value":"[variables('baseTemplateUri')]"
+                    "baseTemplateUri": {
+                        "value": "[variables('baseTemplateUri')]"
                     }
                 }
             }
         },
-
-
         {
             "name": "vmAdditionalOmsOnboardRecoveryServicesVaultDeployment",
             "type": "Microsoft.Resources/deployments",
@@ -521,8 +554,8 @@
                     "backupPolicyName": {
                         "value": "defaultPolicy-01"
                     },
-                    "region":{
-                        "value":"[variables('omsSettings').primaryRegion]"
+                    "region": {
+                        "value": "[variables('omsSettings').primaryRegion]"
                     }
                 }
             }

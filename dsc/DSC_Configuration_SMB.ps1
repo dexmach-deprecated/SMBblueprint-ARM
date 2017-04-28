@@ -279,12 +279,12 @@ if($AllNodes.Where{($_.Role -contains "RDS-Session") -and ($_.NodeName -eq $Node
         DependsOn = $DependsOnAD
     }
         
-    WaitForAll RDS {
-        ResourceName = "[cRDSessionDeployment]Deployment"
-        NodeName = $Node.ConnectionBroker
-        RetryIntervalSec = 60
-        RetryCount = 10
-    }
+    # WaitForAll RDS {
+    #     ResourceName = "[cRDSessionDeployment]Deployment"
+    #     NodeName = $Node.ConnectionBroker
+    #     RetryIntervalSec = 60
+    #     RetryCount = 10
+    # }
 
    
     cRDSessionHost Deployment {

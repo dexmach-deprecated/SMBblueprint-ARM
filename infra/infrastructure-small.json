@@ -69,7 +69,8 @@
                             "domainName": "[parameters('deploymentSettings').domainName]",
                             "dscProfile":"[parameters('deploymentSettings').customerSize]",
                             "storageType":"[parameters('deploymentSettings').storageType]",
-                            "OS":"[parameters('deploymentSettings').OS]"
+                            "OS":"[parameters('deploymentSettings').OS]",
+                            "osDiskSizeGB":"[parameters('deploymentSettings').osDiskSizeGB]"
                         }
                     },
                     "adminPassword": {

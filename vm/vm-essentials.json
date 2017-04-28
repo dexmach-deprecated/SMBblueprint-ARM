@@ -61,7 +61,8 @@
             "networkInterfaceName": "[concat('nic','-',parameters('vm').name)]",
             "vmSize": "[parameters('vm').vmSize]",
             "DataDisk": "ADDataDisk",
-            "DataDiskSize": 1000
+            "DataDiskSize": 1000,
+            "osDiskSizeGb":"[parameters('vm').osDiskSizeGB]"
         },
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vm').virtualNetworkName)]",
         "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('vm').virtualNetworkSubnetName)]"
@@ -133,6 +134,7 @@
                     },
                     "osDisk": {
                         "osType": "Windows",
+                        "diskSizeGB":"[variables('vmVariable').osDiskSizeGb]",
                         "caching": "ReadWrite",
                         "createOption": "FromImage",
                         "name": "[variables('vmVariable').osDiskName]",

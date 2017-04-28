@@ -73,7 +73,8 @@
                             "domainName": "[parameters('deploymentSettings').domainName]",
                             "dscProfile":"[parameters('deploymentSettings').customerSize]",
                             "storageType":"[parameters('deploymentSettings').storageType]",
-                            "OS":"[parameters('deploymentSettings').OS]"
+                            "OS":"[parameters('deploymentSettings').OS]",
+                            "osDiskSizeGB":"[parameters('deploymentSettings').osDiskSizeGB]"
                         }
                     },
                     "adminPassword": {
@@ -144,7 +145,8 @@
                             "domainName": "[parameters('deploymentSettings').domainName]",
                             "dscProfile":"[parameters('deploymentSettings').customerSize]",
                             "OS":"[parameters('deploymentSettings').OS]",
-                            "storageType":"[parameters('deploymentSettings').storageType]"
+                            "storageType":"[parameters('deploymentSettings').storageType]",
+                            "osDiskSizeGB":"[parameters('deploymentSettings').osDiskSizeGB]"
                         }
                     },
                     "adminPassword": {
@@ -222,7 +224,7 @@
                             "domainName": "[parameters('deploymentSettings').domainName]",
                             "dscProfile":"[parameters('deploymentSettings').customerSize]",
                             "OS":"[parameters('deploymentSettings').OS]",
-                            "storageType":"[parameters('deploymentSettings').storageType]"
+                            "storageType":"Standard_LRS"
 
                             
                         }

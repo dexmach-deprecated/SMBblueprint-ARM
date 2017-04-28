@@ -43,6 +43,9 @@
             },
             "compute": {
                 "virtualMachines": "2016-04-30-preview"
+            },
+            "management":{
+                "monitoring":"2015-06-15"
             }
         },
         "resourceLocation": "[resourceGroup().location]",
@@ -173,9 +176,9 @@
             }
         },
         {
-            "type": "extensions",
-            "name": "Microsoft.EnterpriseCloud.Monitoring",
-            "apiVersion": "[variables('apiVersion').compute.virtualMachines]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vm').name,'/Monitoring')]",
+            "apiVersion": "[variables('apiVersion').management.monitoring]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/', parameters('vm').name)]"
